@@ -1,0 +1,50 @@
+local Server = {}
+Server.__index = Server
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Networker = require(ReplicatedStorage.Packages.Networker)
+
+type SyncerConfig = {
+	networkerKey :string,
+	tag :string,
+	dataRetrievalCallback :(key :string)->(),
+}
+
+type Server = {
+	new :()->(),
+	register :(self :Server,...any)->(),
+	unregister :(self :Server,key :string)->(),
+	
+	dataRetrievalCallback :(key :string)->(),
+	
+	networker :Networker.Server,	
+}
+
+function Server.new(SyncerConfig :SyncerConfig)
+	
+	local self = setmetatable({},Server) ::Server
+	
+	self.networker = Networker.server.new(SyncerConfig.networkerKey,self,{})
+	
+	self.dataRetrievalCallback = SyncerConfig.dataRetrievalCallback
+	
+	return self
+	
+end
+
+function Server.getData(self :Server,key :string)
+	return self.dataRetrievalCallback(key)
+end
+
+function Server.register(self :Server,...)
+	self.networker:fireAll('register',...)
+end
+
+function Server.unregister(self :Server,key :string)
+	self.networker:fireAll('unregister',key)
+end
+
+
+
+return Server
