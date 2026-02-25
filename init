@@ -1,0 +1,7 @@
+local server = require(script.Server)
+local client = require(script.Client)
+
+return {
+	server = server,
+	client = client,
+}
