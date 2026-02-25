@@ -1,0 +1,55 @@
+local Client = {}
+Client.__index = Client
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Networker = require(ReplicatedStorage.Packages.Networker)
+
+type SyncerConfig = {
+	networkerKey :string,
+	tag :string,
+	creationCallback :()->(),
+	deletionCallback :()->(),
+}
+
+type Client = {
+
+	new :()->(),
+	register :(self :Client,...any)->(),
+	unregister :(self :Client,key :string)->(),
+	getData :(self :Client,key :string)->(),
+	
+	creationCallback :(...any)->(),
+	deletionCallback :(key :string)->(),
+
+	networker :Networker.Client,	
+}
+
+function Client.new(SyncerConfig :SyncerConfig)
+
+	local self = setmetatable({},Client) ::Client
+
+	self.networker = Networker.server.new(SyncerConfig.networkerKey,self,{})
+	
+	self.creationCallback = SyncerConfig.creationCallback
+	self.deletionCallback = SyncerConfig.deletionCallback
+	
+	return self
+
+end
+
+function Client.getData(self :Client,key :string)
+	return self.networker:fetch('getData',key)
+end
+
+function Client.register(self :Client,...)
+	if not self.creationCallback then return end
+	self.creationCallback(...)
+end
+
+function Client.unregister(self :Client,key :string)
+	if not self.deletionCallback then return end
+	self.deletionCallback(key)
+end
+
+return Client
